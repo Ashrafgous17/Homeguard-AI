@@ -400,23 +400,31 @@ export default function HomePage() {
             <button
               onClick={() => setMobileOpen((p) => !p)}
               aria-label="Toggle navigation"
-              className="relative flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white shadow-sm transition hover:border-cyan-400"
+              className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white shadow-sm transition hover:border-cyan-400"
             >
-              <span
-                className={`block h-[2px] w-4 rounded-full bg-slate-800 transition transform ${
-                  mobileOpen ? "translate-y-1 rotate-45" : "-translate-y-1"
-                }`}
-              />
-              <span
-                className={`block h-[2px] w-4 rounded-full bg-slate-800 transition ${
-                  mobileOpen ? "opacity-0" : "opacity-100"
-                }`}
-              />
-              <span
-                className={`block h-[2px] w-4 rounded-full bg-slate-800 transition transform ${
-                  mobileOpen ? "-translate-y-1 -rotate-45" : "translate-y-1"
-                }`}
-              />
+              {mobileOpen ? (
+                // X icon
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-4 w-4 text-slate-800"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              ) : (
+                // Hamburger icon
+                <div className="space-y-1">
+                  <span className="block h-[2px] w-4 rounded-full bg-slate-800" />
+                  <span className="block h-[2px] w-4 rounded-full bg-slate-800" />
+                  <span className="block h-[2px] w-4 rounded-full bg-slate-800" />
+                </div>
+              )}
             </button>
           </div>
         </nav>
@@ -424,7 +432,9 @@ export default function HomePage() {
         {/* Mobile nav menu */}
         <div
           className={`md:hidden origin-top overflow-hidden border-t border-slate-200 bg-white/95 transition-all duration-200 ${
-            mobileOpen ? "max-h-60 opacity-100" : "max-h-0 opacity-0"
+            mobileOpen
+              ? "max-h-60 opacity-100 pointer-events-auto"
+              : "max-h-0 opacity-0 pointer-events-none"
           }`}
         >
           <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-3 text-sm font-medium text-slate-700">
@@ -494,9 +504,12 @@ export default function HomePage() {
         {/* SOLUTIONS (90vh, alternating layout, headings = solution names) */}
         <section
           id="solutions"
-          className="flex min-h-[90vh] flex-col items-center justify-center gap-10 py-16 text-center"
+          className="flex min-h-[90vh] flex-col justify-center gap-10 py-16"
         >
-          <div className="max-w-2xl">
+          {/* Heading block – left for EN, right for AR */}
+          <div
+            className={`max-w-2xl mx-auto ${isAr ? "text-right" : "text-left"}`}
+          >
             <h2 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
               {t.solutionsIntroTitle}
             </h2>
@@ -505,6 +518,7 @@ export default function HomePage() {
             </p>
           </div>
 
+          {/* Solutions list with alternating layout */}
           <div className="space-y-12 w-full">
             {t.solutions.map((solution, index) => {
               const isEven = index % 2 === 0;
@@ -523,8 +537,8 @@ export default function HomePage() {
                   className={`flex flex-col items-center gap-10 ${layout}`}
                 >
                   {/* Illustration block */}
-                  <div className="w-full lg:w-1/2">
-                    <div className="relative mx-auto h-64 max-w-md overflow-hidden rounded-3xl bg-gradient-to-br from-cyan-100 via-white to-blue-100 shadow-xl">
+                  <div className="w-full lg:w-1/2 flex justify-center">
+                    <div className="relative h-64 w-full max-w-md overflow-hidden rounded-3xl bg-gradient-to-br from-cyan-100 via-white to-blue-100 shadow-xl">
                       <div className="absolute inset-0 opacity-60">
                         <div className="absolute -top-10 -left-10 h-40 w-40 rounded-full bg-cyan-300/40 blur-3xl" />
                         <div className="absolute bottom-0 right-0 h-40 w-40 rounded-full bg-blue-400/30 blur-3xl" />
@@ -542,17 +556,27 @@ export default function HomePage() {
                     </div>
                   </div>
 
-                  {/* Text block */}
-                  <div className="w-full lg:w-1/2">
+                  {/* Text block – left/right align by language */}
+                  <div
+                    className={`w-full lg:w-1/2 mx-auto max-w-md ${
+                      isAr ? "text-right" : "text-left"
+                    }`}
+                  >
+                    {/* Main solution title */}
                     <h3 className="text-xl font-semibold text-slate-900 sm:text-2xl">
                       {solution.label}
                     </h3>
+
+                    {/* Subheading / tagline */}
                     <p className="mt-2 text-sm text-slate-600 sm:text-base">
                       {solution.tagline}
                     </p>
-                    <ul className="mt-4 space-y-2 text-xs text-slate-600 sm:text-sm text-left lg:text-left mx-auto max-w-md">
+
+                    {/* Bullets */}
+                    <ul className="mt-4 space-y-2 text-xs text-slate-600 sm:text-sm">
                       {solution.bullets.map((b) => (
                         <li key={b} className="flex items-start gap-2">
+                          {/* dot goes to the correct side automatically with flex + dir */}
                           <span className="mt-1 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-cyan-500" />
                           <span>{b}</span>
                         </li>
@@ -562,6 +586,18 @@ export default function HomePage() {
                 </div>
               );
             })}
+          </div>
+
+          {/* Solutions CTA at bottom of section */}
+          <div className="mt-6 flex justify-center">
+            <a
+              href="#contact"
+              className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 px-7 py-2.5 text-sm font-semibold text-white shadow-lg shadow-cyan-400/40 transition hover:brightness-110"
+            >
+              {lang === "en"
+                ? "Talk to us about these solutions"
+                : "تواصل معنا بخصوص هذه الحلول"}
+            </a>
           </div>
         </section>
 
@@ -607,7 +643,7 @@ export default function HomePage() {
                     </li>
                   ))}
                 </ul>
-                <button className="mt-auto inline-flex w-max items-center rounded-full border border-cyan-500/70 bg-cyan-50 px-4 py-1.5 text-xs font-semibold text-cyan-700 transition hover:bg-cyan-500 hover:text-white">
+                <button className="mt-4 inline-flex w-max items-center rounded-full border border-cyan-500/70 bg-cyan-50 px-4 py-1.5 text-xs font-semibold text-cyan-700 transition hover:bg-cyan-500 hover:text-white">
                   {product.cta}
                 </button>
               </article>
