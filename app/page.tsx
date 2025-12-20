@@ -1,6 +1,14 @@
+// app/page.tsx
 "use client";
 
-import { useState } from "react";
+import React, { useMemo, useState } from "react";
+import Image from "next/image";
+
+// ✅ Import images (no image paths inside content objects)
+import heroBg from "@/public/hero-bg.jpg";
+import parentalImg from "@/public/parental-control.jpg";
+import facialImg from "@/public/facial-recognition.jpg";
+import guardianImg from "@/public/internet-guardian.jpg";
 
 type Lang = "en" | "ar";
 
@@ -11,7 +19,6 @@ const content = {
       { href: "#hero", label: "Home" },
       { href: "#solutions", label: "Solutions" },
       { href: "#products", label: "Products" },
-      { href: "#why-exist", label: "Why We Exist" },
       { href: "#contact", label: "Contact" },
     ],
     heroBadge: "AI-POWERED SMART HOME SECURITY",
@@ -27,7 +34,7 @@ const content = {
     ],
 
     // Solutions
-    solutionsIntroTitle: "Our Smart Home Solutions",
+    solutionsIntroTitle: "Our Solutions",
     solutionsIntroSubtitle:
       "Each solution is designed to protect, control, and simplify your digital life.",
 
@@ -71,7 +78,7 @@ const content = {
       },
     ],
 
-    productsTitle: "Featured Smart Home Devices",
+    productsTitle: "Our Products",
     productsSubtitle:
       "Premium hardware that unlocks the full power of our AI ecosystem.",
     products: [
@@ -105,16 +112,6 @@ const content = {
       },
     ],
 
-    whyExistTitle: "Why We Exist",
-    whyExistSubtitle:
-      "Homes are more connected than ever — but also more exposed. We exist to give families simple, powerful tools that make smart homes truly feel safe, easy, and stress-free.",
-    whyExistPoints: [
-      "Kids are growing up online without enough protection.",
-      "Smart devices are expanding faster than traditional security.",
-      "Most solutions are fragmented, complex, and hard to manage.",
-      "We unify security, control, and intelligence into one ecosystem.",
-    ],
-
     whyChooseTitle: "Why Choose Us?",
     whyChooseSubtitle: "A Unified Ecosystem That Actually Works Together",
     whyChooseIntro:
@@ -131,7 +128,7 @@ const content = {
 
     builtAiTitle: "Built With Next-Gen AI",
     builtAiSubtitle:
-      "Our technology learns your routines, adapts to your lifestyle, and protects your home automatically — no tech expertise required.",
+      "Our technology is designed to learn your routines, adapt to your lifestyle, and protect your home automatically without needing you to be “techy.”",
     builtAiBullets: [
       "Autonomous threat identification",
       "Facial recognition that improves over time",
@@ -159,7 +156,6 @@ const content = {
       { href: "#hero", label: "الرئيسية" },
       { href: "#solutions", label: "الحلول" },
       { href: "#products", label: "المنتجات" },
-      { href: "#why-exist", label: "لماذا وُجدنا" },
       { href: "#contact", label: "تواصل معنا" },
     ],
     heroBadge: "حماية منزلية ذكية مدعومة بالذكاء الاصطناعي",
@@ -174,7 +170,7 @@ const content = {
       "مصمم للعائلات والمنازل الذكية الحديثة",
     ],
 
-    solutionsIntroTitle: "حلول المنزل الذكي",
+    solutionsIntroTitle: "حلولنا",
     solutionsIntroSubtitle:
       "كل حل مصمَّم لحماية حياتك الرقمية والتحكم بها وتبسيطها.",
 
@@ -217,7 +213,7 @@ const content = {
       },
     ],
 
-    productsTitle: "أهم الأجهزة الذكية لمنزلك",
+    productsTitle: "منتجاتنا",
     productsSubtitle:
       "أجهزة مميزة تفتح الإمكانات الكاملة لنظامنا الذكي المدعوم بالذكاء الاصطناعي.",
     products: [
@@ -249,16 +245,6 @@ const content = {
         ],
         cta: "عرض التفاصيل",
       },
-    ],
-
-    whyExistTitle: "لماذا وُجدنا",
-    whyExistSubtitle:
-      "المنازل اليوم أكثر اتصالًا من أي وقت مضى — لكنها أيضًا أكثر عرضة للمخاطر. نحن هنا لنمنح العائلات أدوات بسيطة وقوية تجعل المنزل الذكي آمنًا وسهلًا وخاليًا من التوتر.",
-    whyExistPoints: [
-      "الأطفال يقضون وقتًا طويلًا على الإنترنت بدون حماية كافية.",
-      "الأجهزة الذكية تتزايد أسرع من حلول الأمان التقليدية.",
-      "معظم الحلول مجزأة ومعقدة وصعبة الإدارة.",
-      "نحن نوحّد الأمان والتحكم والذكاء في نظام واحد متكامل.",
     ],
 
     whyChooseTitle: "لماذا تختارنا؟",
@@ -298,21 +284,102 @@ const content = {
     footerText:
       "© " + new Date().getFullYear() + " هوم جارد AI. جميع الحقوق محفوظة.",
   },
-};
+} as const;
 
 export default function HomePage() {
   const [lang, setLang] = useState<Lang>("en");
   const [mobileOpen, setMobileOpen] = useState(false);
 
+  // ✅ Contact form state + validation
+  const [contact, setContact] = useState({ name: "", email: "", message: "" });
+  const [errors, setErrors] = useState<{
+    name?: string;
+    email?: string;
+    message?: string;
+  }>({});
+  const [submitted, setSubmitted] = useState(false);
+
   const t = content[lang];
   const isAr = lang === "ar";
+
+  // ✅ Image map (no paths in content objects)
+  const solutionImages = useMemo(
+    () => ({
+      parental: parentalImg,
+      facial: facialImg,
+      guardian: guardianImg,
+    }),
+    []
+  );
+
+  const validateEmail = (email: string) =>
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+  const handleContactSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setSubmitted(false);
+
+    const nextErrors: typeof errors = {};
+    if (!contact.name.trim())
+      nextErrors.name = lang === "en" ? "Name is required." : "الاسم مطلوب.";
+    if (!contact.email.trim())
+      nextErrors.email =
+        lang === "en" ? "Email is required." : "البريد الإلكتروني مطلوب.";
+    else if (!validateEmail(contact.email.trim()))
+      nextErrors.email =
+        lang === "en" ? "Enter a valid email." : "أدخل بريدًا صحيحًا.";
+    if (!contact.message.trim())
+      nextErrors.message =
+        lang === "en" ? "Message is required." : "الرسالة مطلوبة.";
+
+    setErrors(nextErrors);
+    if (Object.keys(nextErrors).length > 0) return;
+
+    // ✅ Demo submit (replace with API later)
+    setSubmitted(true);
+    setContact({ name: "", email: "", message: "" });
+  };
+
+  // ✅ Context-fit icons for Why Choose Us
+  const whyChooseIcon = (text: string) => {
+    const s = text.toLowerCase();
+    if (s.includes("parental") || s.includes("أبوي")) return "👨‍👩‍👧‍👦";
+    if (
+      s.includes("threat") ||
+      s.includes("تهديد") ||
+      s.includes("network") ||
+      s.includes("شبكة")
+    )
+      return "🛡️";
+    if (s.includes("access") || s.includes("وصول")) return "🔐";
+    if (
+      s.includes("unified") ||
+      s.includes("موح") ||
+      s.includes("device") ||
+      s.includes("الأجهزة")
+    )
+      return "🧩";
+    if (s.includes("privacy") || s.includes("خصوص")) return "🔒";
+    if (s.includes("mobile") || s.includes("تطبيق") || s.includes("app"))
+      return "📱";
+    return "✨";
+  };
+
+  const iconAnimClass = (i: number) =>
+    i % 4 === 0
+      ? "animate-[float_3s_ease-in-out_infinite]"
+      : i % 4 === 1
+      ? "animate-[pulseSoft_2.2s_ease-in-out_infinite]"
+      : i % 4 === 2
+      ? "animate-[wiggle_1.4s_ease-in-out_infinite]"
+      : "animate-[pop_2.6s_ease-in-out_infinite]";
 
   return (
     <div
       dir={isAr ? "rtl" : "ltr"}
       className="min-h-screen bg-slate-50 text-slate-900"
     >
-      {/* HERO background gradients */}
+      {/* Global background gradients */}
       <div className="pointer-events-none fixed inset-0 -z-10">
         <div className="absolute inset-0 bg-gradient-to-b from-cyan-50 via-slate-50 to-blue-50" />
         <div className="absolute -top-40 -left-10 h-80 w-80 rounded-full bg-cyan-300/20 blur-3xl" />
@@ -321,40 +388,41 @@ export default function HomePage() {
       </div>
 
       {/* NAVBAR */}
-      <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/80 backdrop-blur">
+      {/* NAVBAR */}
+      <header className="sticky top-0 z-40 border-b border-white/10 bg-black/80 backdrop-blur">
         <nav className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
           {/* Logo */}
           <div className="flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-500 to-blue-500 text-white shadow-md shadow-cyan-400/40">
-              <span className="text-lg font-semibold tracking-tight">HG</span>
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-500 to-blue-500 text-white shadow-md">
+              <span className="text-lg font-semibold">HG</span>
             </div>
-            <span className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-700">
+            <span className="text-xs font-semibold uppercase tracking-[0.18em] text-white">
               {t.navLogo}
             </span>
           </div>
 
-          {/* Desktop nav */}
+          {/* Desktop Nav */}
           <div className="hidden items-center gap-6 md:flex">
-            <div className="flex gap-5 text-sm font-medium text-slate-700">
+            <div className="flex gap-6 text-sm font-medium text-white/80">
               {t.navLinks.map((link) => (
                 <a
                   key={link.href}
                   href={link.href}
-                  className="relative transition hover:text-slate-950"
+                  className="transition hover:text-white"
                 >
                   {link.label}
                 </a>
               ))}
             </div>
 
-            {/* Language toggle */}
-            <div className="ml-4 flex items-center gap-1 rounded-full border border-slate-200 bg-white px-1 py-1 text-xs">
+            {/* Language Toggle */}
+            <div className="ml-4 flex items-center gap-1 rounded-full border border-white/20 bg-white/10 px-1 py-1 text-xs">
               <button
                 onClick={() => setLang("en")}
                 className={`rounded-full px-2 py-1 transition ${
                   !isAr
                     ? "bg-cyan-500 text-white"
-                    : "text-slate-700 hover:text-slate-900"
+                    : "text-white/70 hover:text-white"
                 }`}
               >
                 EN
@@ -364,7 +432,7 @@ export default function HomePage() {
                 className={`rounded-full px-2 py-1 transition ${
                   isAr
                     ? "bg-cyan-500 text-white"
-                    : "text-slate-700 hover:text-slate-900"
+                    : "text-white/70 hover:text-white"
                 }`}
               >
                 ع
@@ -372,15 +440,16 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Mobile nav toggle */}
+          {/* Mobile Controls */}
           <div className="flex items-center gap-2 md:hidden">
-            <div className="flex items-center gap-1 rounded-full border border-slate-200 bg-white px-1 py-1 text-xs">
+            {/* Language Toggle */}
+            <div className="flex items-center gap-1 rounded-full border border-white/20 bg-white/10 px-1 py-1 text-xs">
               <button
                 onClick={() => setLang("en")}
                 className={`rounded-full px-2 py-1 transition ${
                   !isAr
                     ? "bg-cyan-500 text-white"
-                    : "text-slate-700 hover:text-slate-900"
+                    : "text-white/70 hover:text-white"
                 }`}
               >
                 EN
@@ -390,23 +459,23 @@ export default function HomePage() {
                 className={`rounded-full px-2 py-1 transition ${
                   isAr
                     ? "bg-cyan-500 text-white"
-                    : "text-slate-700 hover:text-slate-900"
+                    : "text-white/70 hover:text-white"
                 }`}
               >
                 ع
               </button>
             </div>
 
+            {/* Hamburger */}
             <button
               onClick={() => setMobileOpen((p) => !p)}
               aria-label="Toggle navigation"
-              className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white shadow-sm transition hover:border-cyan-400"
+              className="flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-white/10 transition hover:bg-white/20"
             >
               {mobileOpen ? (
-                // X icon
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
-                  className="h-4 w-4 text-slate-800"
+                  className="h-4 w-4 text-white"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
@@ -418,32 +487,31 @@ export default function HomePage() {
                   <line x1="6" y1="6" x2="18" y2="18" />
                 </svg>
               ) : (
-                // Hamburger icon
                 <div className="space-y-1">
-                  <span className="block h-[2px] w-4 rounded-full bg-slate-800" />
-                  <span className="block h-[2px] w-4 rounded-full bg-slate-800" />
-                  <span className="block h-[2px] w-4 rounded-full bg-slate-800" />
+                  <span className="block h-[2px] w-4 rounded-full bg-white" />
+                  <span className="block h-[2px] w-4 rounded-full bg-white" />
+                  <span className="block h-[2px] w-4 rounded-full bg-white" />
                 </div>
               )}
             </button>
           </div>
         </nav>
 
-        {/* Mobile nav menu */}
+        {/* Mobile Menu */}
         <div
-          className={`md:hidden origin-top overflow-hidden border-t border-slate-200 bg-white/95 transition-all duration-200 ${
+          className={`md:hidden overflow-hidden border-t border-white/10 bg-black/95 transition-all duration-200 ${
             mobileOpen
-              ? "max-h-60 opacity-100 pointer-events-auto"
+              ? "max-h-64 opacity-100 pointer-events-auto"
               : "max-h-0 opacity-0 pointer-events-none"
           }`}
         >
-          <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-3 text-sm font-medium text-slate-700">
+          <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-4 text-sm font-medium text-white/80">
             {t.navLinks.map((link) => (
               <a
                 key={link.href}
                 href={link.href}
                 onClick={() => setMobileOpen(false)}
-                className="rounded-xl px-2 py-2 transition hover:bg-cyan-50 hover:text-cyan-700"
+                className="rounded-xl px-3 py-2 transition hover:bg-white/10 hover:text-white"
               >
                 {link.label}
               </a>
@@ -452,46 +520,63 @@ export default function HomePage() {
         </div>
       </header>
 
-      {/* MAIN */}
-      <main className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-        {/* HERO (centered, 90vh) */}
-        <section
-          id="hero"
-          className="flex min-h-[90vh] flex-col items-center justify-center py-16 text-center"
-        >
+      {/* HERO (full width + imported image) */}
+      {/* HERO (full width + imported image) */}
+      <section id="hero" className="relative isolate w-full overflow-hidden">
+        {/* Hero Image */}
+        <Image
+          src={heroBg}
+          alt="Hero background"
+          fill
+          priority
+          className="object-cover object-center"
+          sizes="100vw"
+        />
+
+        {/* ✅ Black overlay (true dark) */}
+        <div className="absolute inset-0 bg-black/60" />
+
+        {/* Content */}
+        <div className="relative z-10 mx-auto flex min-h-[90vh] max-w-6xl items-center justify-center px-4 py-16 text-center sm:px-6 lg:px-8">
           <div className="max-w-3xl">
-            <div className="inline-flex items-center rounded-full border border-cyan-400/50 bg-white/70 px-4 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-cyan-700 shadow-sm">
-              <span className="mr-2 inline-block h-1.5 w-1.5 rounded-full bg-cyan-500" />
+            {/* Badge */}
+            <div className="inline-flex items-center rounded-full border border-white/30 bg-white/10 px-4 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-white">
+              <span className="mr-2 inline-block h-1.5 w-1.5 rounded-full bg-cyan-400" />
               {t.heroBadge}
             </div>
 
-            <h1 className="mt-6 text-balance text-3xl font-semibold leading-tight tracking-tight text-slate-900 sm:text-4xl lg:text-5xl">
+            {/* Heading */}
+            <h1 className="mt-6 text-balance text-3xl font-semibold leading-tight tracking-tight text-white sm:text-4xl lg:text-5xl">
               {t.heroTitle}
             </h1>
-            <p className="mt-4 text-sm leading-relaxed text-slate-600 sm:text-base">
+
+            {/* Subtitle */}
+            <p className="mt-4 text-sm leading-relaxed text-white/80 sm:text-base">
               {t.heroSubtitle}
             </p>
 
+            {/* CTAs */}
             <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
               <a
                 href="#contact"
-                className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 px-7 py-2.5 text-sm font-semibold text-white shadow-lg shadow-cyan-400/40 transition hover:brightness-110"
+                className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 px-7 py-2.5 text-sm font-semibold text-white shadow-lg transition hover:brightness-110"
               >
                 {t.heroPrimaryCta}
               </a>
               <a
                 href="#solutions"
-                className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-6 py-2.5 text-sm font-semibold text-slate-800 shadow-sm transition hover:border-cyan-400 hover:text-cyan-800"
+                className="inline-flex items-center justify-center rounded-full border border-white/40 bg-white/10 px-6 py-2.5 text-sm font-semibold !text-cyan-400 transition hover:bg-white/20 hover:!text-cyan-300 hover:border-white/60"
               >
                 {t.heroSecondaryCta}
               </a>
             </div>
 
-            <ul className="mt-6 flex flex-wrap justify-center gap-3 text-xs text-slate-600 sm:text-sm">
+            {/* Subpoints */}
+            <ul className="mt-6 flex flex-wrap justify-center gap-3 text-xs text-white/80 sm:text-sm">
               {t.heroSubpoints.map((item) => (
                 <li
                   key={item}
-                  className="flex items-center gap-2 rounded-full bg-white/70 px-3 py-1 shadow-sm"
+                  className="flex items-center gap-2 rounded-full bg-white/10 px-3 py-1"
                 >
                   <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-400" />
                   <span>{item}</span>
@@ -499,17 +584,17 @@ export default function HomePage() {
               ))}
             </ul>
           </div>
-        </section>
+        </div>
+      </section>
 
-        {/* SOLUTIONS (90vh, alternating layout, headings = solution names) */}
+      {/* MAIN */}
+      <main className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+        {/* SOLUTIONS (imported images) */}
         <section
           id="solutions"
-          className="flex min-h-[90vh] flex-col justify-center gap-10 py-16"
+          className="flex min-h-[90vh] flex-col items-center justify-center gap-10 py-16 text-center"
         >
-          {/* Heading block – left for EN, right for AR */}
-          <div
-            className={`max-w-2xl mx-auto ${isAr ? "text-right" : "text-left"}`}
-          >
+          <div className="mx-auto max-w-2xl text-center">
             <h2 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
               {t.solutionsIntroTitle}
             </h2>
@@ -518,8 +603,7 @@ export default function HomePage() {
             </p>
           </div>
 
-          {/* Solutions list with alternating layout */}
-          <div className="space-y-12 w-full">
+          <div className="w-full space-y-20">
             {t.solutions.map((solution, index) => {
               const isEven = index % 2 === 0;
               const layout =
@@ -531,52 +615,36 @@ export default function HomePage() {
                   ? "lg:flex-row-reverse"
                   : "lg:flex-row";
 
+              const img =
+                solutionImages[solution.key as keyof typeof solutionImages];
+
               return (
                 <div
                   key={solution.key}
-                  className={`flex flex-col items-center gap-10 ${layout}`}
+                  className={`flex flex-col items-center gap-14 ${layout}`}
                 >
-                  {/* Illustration block */}
+                  {/* Image block */}
                   <div className="w-full lg:w-1/2 flex justify-center">
-                    <div className="relative h-64 w-full max-w-md overflow-hidden rounded-3xl bg-gradient-to-br from-cyan-100 via-white to-blue-100 shadow-xl">
-                      <div className="absolute inset-0 opacity-60">
-                        <div className="absolute -top-10 -left-10 h-40 w-40 rounded-full bg-cyan-300/40 blur-3xl" />
-                        <div className="absolute bottom-0 right-0 h-40 w-40 rounded-full bg-blue-400/30 blur-3xl" />
-                      </div>
-                      <div className="relative flex h-full flex-col items-center justify-center gap-4">
-                        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/80 text-3xl shadow-lg">
-                          {solution.key === "parental" && "👨‍👩‍👧‍👦"}
-                          {solution.key === "facial" && "🧠"}
-                          {solution.key === "guardian" && "🛡️"}
-                        </div>
-                        <p className="text-xs font-medium uppercase tracking-[0.18em] text-slate-600">
-                          {solution.label}
-                        </p>
-                      </div>
-                    </div>
+                    {/* empty image slot (no Image, no icon, no label inside) */}
+                    <div className="relative h-72 w-full max-w-md overflow-hidden rounded-3xl border border-slate-200 bg-slate-100 shadow-xl" />
                   </div>
 
-                  {/* Text block – left/right align by language */}
+                  {/* Text block */}
                   <div
                     className={`w-full lg:w-1/2 mx-auto max-w-md ${
                       isAr ? "text-right" : "text-left"
                     }`}
                   >
-                    {/* Main solution title */}
                     <h3 className="text-xl font-semibold text-slate-900 sm:text-2xl">
                       {solution.label}
                     </h3>
-
-                    {/* Subheading / tagline */}
                     <p className="mt-2 text-sm text-slate-600 sm:text-base">
                       {solution.tagline}
                     </p>
 
-                    {/* Bullets */}
                     <ul className="mt-4 space-y-2 text-xs text-slate-600 sm:text-sm">
                       {solution.bullets.map((b) => (
                         <li key={b} className="flex items-start gap-2">
-                          {/* dot goes to the correct side automatically with flex + dir */}
                           <span className="mt-1 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-cyan-500" />
                           <span>{b}</span>
                         </li>
@@ -588,7 +656,6 @@ export default function HomePage() {
             })}
           </div>
 
-          {/* Solutions CTA at bottom of section */}
           <div className="mt-6 flex justify-center">
             <a
               href="#contact"
@@ -601,7 +668,7 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* PRODUCTS (90vh, centered) */}
+        {/* PRODUCTS */}
         <section
           id="products"
           className="flex min-h-[90vh] flex-col items-center justify-center gap-10 py-16 text-center"
@@ -651,30 +718,8 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* WHY WE EXIST (big), WHY CHOOSE US (animated icons), BUILT WITH AI + CONTACT (90vh) */}
-        <section
-          id="why-exist"
-          className="flex min-h-[90vh] flex-col items-center justify-center gap-12 py-16 text-center"
-        >
-          {/* Why we exist - big */}
-          <div className="max-w-3xl">
-            <h2 className="text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
-              {t.whyExistTitle}
-            </h2>
-            <p className="mt-3 text-sm leading-relaxed text-slate-600 sm:text-base">
-              {t.whyExistSubtitle}
-            </p>
-            <ul className="mt-6 space-y-2 text-sm text-slate-600 sm:text-base text-left mx-auto max-w-xl">
-              {t.whyExistPoints.map((p) => (
-                <li key={p} className="flex items-start gap-2">
-                  <span className="mt-1 text-cyan-500">•</span>
-                  <span>{p}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Why choose us - animated icons */}
+        {/* WHY CHOOSE US + BUILT WITH AI + CONTACT */}
+        <section className="flex min-h-[90vh] flex-col items-center justify-center gap-12 py-16 text-center">
           <div className="max-w-4xl space-y-6">
             <h3 className="text-2xl font-semibold text-slate-900 sm:text-3xl">
               {t.whyChooseTitle}
@@ -685,6 +730,7 @@ export default function HomePage() {
             <p className="mt-2 text-xs text-slate-600 sm:text-sm">
               {t.whyChooseIntro}
             </p>
+
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
               {t.whyChooseBullets.map((b, i) => (
                 <div
@@ -692,98 +738,258 @@ export default function HomePage() {
                   className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-left shadow-sm"
                 >
                   <div
-                    className={`flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-cyan-500 to-blue-500 text-white text-sm shadow-md ${
-                      i % 3 === 0
-                        ? "animate-bounce"
-                        : i % 3 === 1
-                        ? "animate-pulse"
-                        : "animate-[wiggle_1.2s_ease-in-out_infinite]"
-                    }`}
+                    className={`flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-cyan-500 to-blue-500 text-white shadow-md ${iconAnimClass(
+                      i
+                    )}`}
+                    aria-hidden="true"
                   >
-                    {i % 3 === 0 ? "⚡" : i % 3 === 1 ? "🔒" : "📡"}
+                    <span className="text-base leading-none">
+                      {whyChooseIcon(b)}
+                    </span>
                   </div>
                   <span className="text-sm text-slate-700">{b}</span>
                 </div>
               ))}
             </div>
+
             <p className="mt-3 text-xs text-slate-600 sm:text-sm">
               {t.whyChooseOutro}
             </p>
           </div>
 
-          {/* Built with AI + contact form (still in this big section) */}
           <div
             id="contact"
-            className="mt-6 grid w-full gap-8 rounded-3xl border border-cyan-400/60 bg-gradient-to-br from-cyan-50 via-white to-blue-50 px-6 py-8 text-center shadow-md sm:px-10 md:grid-cols-2"
+            className="mt-6 grid w-full items-stretch gap-8 rounded-3xl border border-cyan-400/60 bg-gradient-to-br from-cyan-50 via-white to-blue-50 px-6 py-8 shadow-md sm:px-10 md:grid-cols-2"
           >
-            {/* Built with AI */}
-            <div className="flex flex-col items-center justify-center gap-4">
-              <h3 className="text-xl font-semibold text-slate-900 sm:text-2xl">
-                {t.builtAiTitle}
-              </h3>
-              <p className="text-sm text-slate-600 sm:text-base">
-                {t.builtAiSubtitle}
-              </p>
-              <ul className="mt-2 space-y-2 text-xs text-slate-600 sm:text-sm text-left max-w-xs mx-auto">
-                {t.builtAiBullets.map((b) => (
-                  <li key={b} className="flex items-start gap-2">
-                    <span className="mt-0.5 text-emerald-500">✔</span>
-                    <span>{b}</span>
-                  </li>
-                ))}
-              </ul>
-              <p className="mt-2 text-xs text-slate-600 sm:text-sm">
-                {t.builtAiOutro}
-              </p>
+            {/* LEFT: Built with AI (aligned to match form) */}
+            <div
+              className={`flex flex-col justify-between rounded-3xl border border-slate-200 bg-white/70 p-6 text-left shadow-sm ${
+                isAr ? "text-right" : "text-left"
+              }`}
+            >
+              <div>
+                <div className="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-700">
+                  {lang === "en"
+                    ? "Next-Gen AI Platform"
+                    : "منصة ذكاء اصطناعي متقدمة"}
+                </div>
+
+                <h3 className="mt-4 text-xl font-semibold text-slate-900 sm:text-2xl">
+                  {lang === "en"
+                    ? "Built With Next-Gen AI That Works Quietly in the Background"
+                    : "مبني بأحدث تقنيات الذكاء الاصطناعي تعمل بهدوء في الخلفية"}
+                </h3>
+
+                <p className="mt-3 text-sm leading-relaxed text-slate-600 sm:text-base">
+                  {lang === "en"
+                    ? "Instead of complex settings, our system learns patterns, detects risks early, and helps you stay in control—whether you’re protecting kids’ devices, securing networks, or managing access."
+                    : "بدلاً من الإعدادات المعقدة، يتعلّم نظامنا الأنماط، يكتشف المخاطر مبكرًا، ويساعدك على التحكم—سواء لحماية أجهزة الأطفال أو تأمين الشبكات أو إدارة الوصول."}
+                </p>
+
+                <div className="mt-6 space-y-3">
+                  {[
+                    {
+                      enTitle: "Autonomous threat detection",
+                      arTitle: "كشف تهديدات تلقائي",
+                      enDesc:
+                        "Finds suspicious traffic and risky behavior in real time.",
+                      arDesc:
+                        "يرصد حركة المرور المشبوهة والسلوكيات الخطرة لحظيًا.",
+                    },
+                    {
+                      enTitle: "Smarter recognition over time",
+                      arTitle: "تعرّف يتحسّن مع الوقت",
+                      enDesc:
+                        "AI improves accuracy as it learns your environment.",
+                      arDesc: "يتحسن الذكاء الاصطناعي كلما تعلّم بيئتك.",
+                    },
+                    {
+                      enTitle: "Helpful automation suggestions",
+                      arTitle: "اقتراحات أتمتة مفيدة",
+                      enDesc: "Recommends settings that match your routines.",
+                      arDesc: "يقترح إعدادات تناسب روتينك.",
+                    },
+                    {
+                      enTitle: "Predictive monitoring for families",
+                      arTitle: "مراقبة استباقية للعائلات",
+                      enDesc:
+                        "Flags risky apps, links, and usage patterns early.",
+                      arDesc:
+                        "يُنبّه مبكرًا للتطبيقات والروابط وأنماط الاستخدام الخطرة.",
+                    },
+                  ].map((item) => (
+                    <div key={item.enTitle} className="flex gap-3">
+                      <div className="mt-0.5 flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600">
+                        ✔
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-slate-900">
+                          {lang === "en" ? item.enTitle : item.arTitle}
+                        </p>
+                        <p className="mt-0.5 text-xs text-slate-600 sm:text-sm">
+                          {lang === "en" ? item.enDesc : item.arDesc}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="mt-6 rounded-2xl border border-slate-200 bg-white px-4 py-3">
+                <p className="text-xs text-slate-700">
+                  {lang === "en"
+                    ? "Outcome: a smarter, safer environment—without needing you to be “techy.”"
+                    : "النتيجة: بيئة أذكى وأكثر أمانًا—دون الحاجة لأن تكون خبيرًا تقنيًا."}
+                </p>
+              </div>
             </div>
 
-            {/* Contact form */}
-            <div className="flex flex-col items-center justify-center">
-              <h4 className="text-base font-semibold text-slate-900 sm:text-lg">
-                {t.ctaTitle}
-              </h4>
-              <p className="mt-2 text-xs text-slate-600 sm:text-sm">
-                {t.ctaSubtitle}
-              </p>
+            {/* RIGHT: Contact form (kept aligned + same validation you already have) */}
+            <div
+              className={`flex flex-col justify-between rounded-3xl border border-slate-200 bg-white p-6 text-left shadow-sm ${
+                isAr ? "text-right" : "text-left"
+              }`}
+            >
+              <div>
+                <h4 className="text-base font-semibold text-slate-900 sm:text-lg">
+                  {lang === "en" ? "Talk to our team" : "تواصل مع فريقنا"}
+                </h4>
+                <p className="mt-2 text-xs text-slate-600 sm:text-sm">
+                  {lang === "en"
+                    ? "Share your needs and we’ll recommend the best solution or product setup."
+                    : "شاركنا احتياجك وسنقترح أفضل حل أو إعداد للمنتجات."}
+                </p>
 
-              <form className="mt-4 w-full max-w-sm space-y-4 text-left">
+                {/* trust checks */}
+                <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-left">
+                  <div className="flex items-start gap-2 text-[11px] text-slate-700">
+                    <span className="text-emerald-500">✔</span>
+                    <span>
+                      {lang === "en"
+                        ? "Reply within 24 hours."
+                        : "نرد خلال 24 ساعة."}
+                    </span>
+                  </div>
+                  <div className="mt-1 flex items-start gap-2 text-[11px] text-slate-700">
+                    <span className="text-emerald-500">✔</span>
+                    <span>
+                      {lang === "en"
+                        ? "For homes and businesses."
+                        : "للمنزل والشركات."}
+                    </span>
+                  </div>
+                  <div className="mt-1 flex items-start gap-2 text-[11px] text-slate-700">
+                    <span className="text-emerald-500">✔</span>
+                    <span>
+                      {lang === "en"
+                        ? "Get a recommended setup plan."
+                        : "تحصل على خطة إعداد مقترحة."}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* FORM (keep your existing controlled inputs + validation) */}
+              <form
+                onSubmit={handleContactSubmit}
+                className="mt-4 space-y-4 text-left"
+              >
+                {/* Name */}
                 <div className="space-y-1 text-xs sm:text-sm">
                   <label className="block text-slate-700">
                     {t.contactName}
                   </label>
                   <input
                     type="text"
-                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:border-cyan-500 sm:text-sm"
+                    value={contact.name}
+                    onChange={(e) =>
+                      setContact((p) => ({ ...p, name: e.target.value }))
+                    }
+                    className={`w-full rounded-xl border bg-white px-3 py-2 text-xs text-slate-900 outline-none sm:text-sm ${
+                      errors.name
+                        ? "border-rose-400 focus:border-rose-500"
+                        : "border-slate-200 focus:border-cyan-500"
+                    }`}
+                    placeholder={lang === "en" ? "Your name" : "اسمك"}
                   />
+                  {errors.name && (
+                    <p className="text-[11px] text-rose-600">{errors.name}</p>
+                  )}
                 </div>
+
+                {/* Email */}
                 <div className="space-y-1 text-xs sm:text-sm">
                   <label className="block text-slate-700">
                     {t.contactEmail}
                   </label>
                   <input
                     type="email"
-                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:border-cyan-500 sm:text-sm"
+                    value={contact.email}
+                    onChange={(e) =>
+                      setContact((p) => ({ ...p, email: e.target.value }))
+                    }
+                    className={`w-full rounded-xl border bg-white px-3 py-2 text-xs text-slate-900 outline-none sm:text-sm ${
+                      errors.email
+                        ? "border-rose-400 focus:border-rose-500"
+                        : "border-slate-200 focus:border-cyan-500"
+                    }`}
+                    placeholder={
+                      lang === "en" ? "you@company.com" : "name@example.com"
+                    }
                   />
+                  {errors.email && (
+                    <p className="text-[11px] text-rose-600">{errors.email}</p>
+                  )}
                 </div>
+
+                {/* Message */}
                 <div className="space-y-1 text-xs sm:text-sm">
                   <label className="block text-slate-700">
                     {t.contactMessage}
                   </label>
                   <textarea
                     rows={4}
-                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:border-cyan-500 sm:text-sm"
+                    value={contact.message}
+                    onChange={(e) =>
+                      setContact((p) => ({ ...p, message: e.target.value }))
+                    }
+                    className={`w-full rounded-xl border bg-white px-3 py-2 text-xs text-slate-900 outline-none sm:text-sm ${
+                      errors.message
+                        ? "border-rose-400 focus:border-rose-500"
+                        : "border-slate-200 focus:border-cyan-500"
+                    }`}
+                    placeholder={
+                      lang === "en"
+                        ? "Tell us what you need..."
+                        : "اكتب رسالتك هنا..."
+                    }
                   />
+                  {errors.message && (
+                    <p className="text-[11px] text-rose-600">
+                      {errors.message}
+                    </p>
+                  )}
                 </div>
+
                 <button
                   type="submit"
-                  className="mt-1 inline-flex w-full items-center justify-center rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-cyan-400/40 transition hover:brightness-110"
+                  className="inline-flex w-full items-center justify-center rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-cyan-400/30 transition hover:brightness-110"
                 >
                   {t.contactSubmit}
                 </button>
+
+                {submitted && (
+                  <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-left text-xs text-emerald-800">
+                    {lang === "en"
+                      ? "✅ Message sent! We’ll get back to you soon."
+                      : "✅ تم الإرسال! سنعود إليك قريبًا."}
+                  </div>
+                )}
+
                 <p className="text-[10px] text-slate-500">
                   {lang === "en"
-                    ? "By submitting, you agree to be contacted about HomeGuard AI solutions. No spam, ever."
-                    : "بإرسال هذا النموذج، فإنك توافق على أن نتواصل معك بخصوص حلول هوم جارد AI — بدون رسائل مزعجة."}
+                    ? "By submitting, you agree to be contacted. No spam."
+                    : "بإرسال هذا النموذج، فإنك توافق على أن نتواصل معك. بدون رسائل مزعجة."}
                 </p>
               </form>
             </div>
@@ -806,7 +1012,7 @@ export default function HomePage() {
         </div>
       </footer>
 
-      {/* Extra keyframes for wiggle animation used above */}
+      {/* Animations */}
       <style jsx global>{`
         @keyframes wiggle {
           0%,
@@ -815,6 +1021,38 @@ export default function HomePage() {
           }
           50% {
             transform: rotate(2deg);
+          }
+        }
+
+        @keyframes float {
+          0%,
+          100% {
+            transform: translateY(0);
+          }
+          50% {
+            transform: translateY(-6px);
+          }
+        }
+
+        @keyframes pulseSoft {
+          0%,
+          100% {
+            transform: scale(1);
+            opacity: 1;
+          }
+          50% {
+            transform: scale(1.05);
+            opacity: 0.9;
+          }
+        }
+
+        @keyframes pop {
+          0%,
+          100% {
+            transform: scale(1);
+          }
+          50% {
+            transform: scale(1.08);
           }
         }
       `}</style>
