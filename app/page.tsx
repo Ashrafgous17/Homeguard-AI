@@ -299,6 +299,37 @@ export default function HomePage() {
   }>({});
   const [submitted, setSubmitted] = useState(false);
 
+  const validateEmail = (email: string) =>
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+  function handleContactSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setSubmitted(false);
+
+    const next: typeof errors = {};
+
+    if (!contact.name.trim())
+      next.name = lang === "en" ? "Name is required." : "الاسم مطلوب.";
+    if (!contact.email.trim())
+      next.email =
+        lang === "en" ? "Email is required." : "البريد الإلكتروني مطلوب.";
+    else if (!validateEmail(contact.email.trim()))
+      next.email =
+        lang === "en" ? "Enter a valid email." : "أدخل بريدًا صحيحًا.";
+    if (!contact.message.trim())
+      next.message =
+        lang === "en"
+          ? "Please tell us what you need."
+          : "اكتب ما الذي تحتاجه.";
+
+    setErrors(next);
+    if (Object.keys(next).length) return;
+
+    // TODO: connect API later
+    setSubmitted(true);
+    setContact({ name: "", email: "", message: "" });
+  }
+
   const t = content[lang];
   const isAr = lang === "ar";
 
@@ -311,34 +342,6 @@ export default function HomePage() {
     }),
     []
   );
-
-  const validateEmail = (email: string) =>
-    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-
-  const handleContactSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setSubmitted(false);
-
-    const nextErrors: typeof errors = {};
-    if (!contact.name.trim())
-      nextErrors.name = lang === "en" ? "Name is required." : "الاسم مطلوب.";
-    if (!contact.email.trim())
-      nextErrors.email =
-        lang === "en" ? "Email is required." : "البريد الإلكتروني مطلوب.";
-    else if (!validateEmail(contact.email.trim()))
-      nextErrors.email =
-        lang === "en" ? "Enter a valid email." : "أدخل بريدًا صحيحًا.";
-    if (!contact.message.trim())
-      nextErrors.message =
-        lang === "en" ? "Message is required." : "الرسالة مطلوبة.";
-
-    setErrors(nextErrors);
-    if (Object.keys(nextErrors).length > 0) return;
-
-    // ✅ Demo submit (replace with API later)
-    setSubmitted(true);
-    setContact({ name: "", email: "", message: "" });
-  };
 
   // ✅ Context-fit icons for Why Choose Us
   const whyChooseIcon = (text: string) => {
@@ -656,7 +659,7 @@ export default function HomePage() {
             })}
           </div>
 
-          <div className="mt-6 flex justify-center">
+          {/* <div className="mt-6 flex justify-center">
             <a
               href="#contact"
               className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 px-7 py-2.5 text-sm font-semibold text-white shadow-lg shadow-cyan-400/40 transition hover:brightness-110"
@@ -665,32 +668,38 @@ export default function HomePage() {
                 ? "Talk to us about these solutions"
                 : "تواصل معنا بخصوص هذه الحلول"}
             </a>
-          </div>
+          </div> */}
         </section>
 
-        {/* PRODUCTS */}
+        {/* PRODUCTS (Safari-safe, no stretch) */}
         <section
           id="products"
-          className="flex min-h-[90vh] flex-col items-center justify-center gap-10 py-16 text-center"
+          className="flex min-h flex-col items-center justify-center gap-10 py-16 text-center"
         >
           <div className="max-w-2xl">
             <h2 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
-              {t.productsTitle}
+              {lang === "en" ? "Our Products" : "منتجاتنا"}
             </h2>
             <p className="mt-2 text-sm text-slate-600 sm:text-base">
               {t.productsSubtitle}
             </p>
           </div>
 
-          <div className="grid w-full gap-8 md:grid-cols-2">
+          {/* ✅ items-start prevents Safari from stretching cards */}
+          <div className="grid w-full items-start gap-8 md:grid-cols-2">
             {t.products.map((product) => (
               <article
                 key={product.key}
-                className="flex h-full flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white p-6 text-left shadow-md shadow-slate-200/70 transition hover:-translate-y-1 hover:border-cyan-400/60"
+                // ✅ remove h-full (this is the Safari fix)
+                className={`flex flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white p-6 text-left shadow-md shadow-slate-200/70 transition hover:-translate-y-1 hover:border-cyan-400/60 ${
+                  isAr ? "text-right" : "text-left"
+                }`}
+                style={{ alignSelf: "start" }} // ✅ extra Safari safety
               >
-                <div className="inline-flex items-center rounded-full bg-cyan-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-cyan-700">
+                <div className="inline-flex w-max items-center rounded-full bg-cyan-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-cyan-700">
                   {product.badge}
                 </div>
+
                 <div className="mt-4 flex items-center gap-3">
                   <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-cyan-100 text-2xl">
                     {product.key === "famlock" ? "🔒" : "🎛️"}
@@ -699,9 +708,11 @@ export default function HomePage() {
                     {product.name}
                   </h3>
                 </div>
+
                 <p className="mt-3 text-xs text-slate-600 sm:text-sm">
                   {product.description}
                 </p>
+
                 <ul className="mt-3 space-y-1.5 text-[11px] text-slate-600 sm:text-xs">
                   {product.bullets.map((b) => (
                     <li key={b} className="flex items-start gap-2">
@@ -710,16 +721,20 @@ export default function HomePage() {
                     </li>
                   ))}
                 </ul>
-                <button className="mt-4 inline-flex w-max items-center rounded-full border border-cyan-500/70 bg-cyan-50 px-4 py-1.5 text-xs font-semibold text-cyan-700 transition hover:bg-cyan-500 hover:text-white">
-                  {product.cta}
-                </button>
+
+                {/* Keep Learn More spacing minimal like you requested earlier */}
+                <div className="mt-4">
+                  <button className="inline-flex w-max items-center rounded-full border border-cyan-500/70 bg-cyan-50 px-4 py-1.5 text-xs font-semibold text-cyan-700 transition hover:bg-cyan-500 hover:text-white">
+                    {product.cta}
+                  </button>
+                </div>
               </article>
             ))}
           </div>
         </section>
 
         {/* WHY CHOOSE US + BUILT WITH AI + CONTACT */}
-        <section className="flex min-h-[90vh] flex-col items-center justify-center gap-12 py-16 text-center">
+        <section className="flex min-h flex-col items-center justify-center gap-12 py-16 text-center">
           <div className="max-w-4xl space-y-6">
             <h3 className="text-2xl font-semibold text-slate-900 sm:text-3xl">
               {t.whyChooseTitle}
@@ -756,242 +771,142 @@ export default function HomePage() {
               {t.whyChooseOutro}
             </p>
           </div>
+        </section>
 
-          <div
-            id="contact"
-            className="mt-6 grid w-full items-stretch gap-8 rounded-3xl border border-cyan-400/60 bg-gradient-to-br from-cyan-50 via-white to-blue-50 px-6 py-8 shadow-md sm:px-10 md:grid-cols-2"
-          >
-            {/* LEFT: Built with AI (aligned to match form) */}
-            <div
-              className={`flex flex-col justify-between rounded-3xl border border-slate-200 bg-white/70 p-6 text-left shadow-sm ${
-                isAr ? "text-right" : "text-left"
-              }`}
-            >
-              <div>
-                <div className="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-700">
-                  {lang === "en"
-                    ? "Next-Gen AI Platform"
-                    : "منصة ذكاء اصطناعي متقدمة"}
-                </div>
-
-                <h3 className="mt-4 text-xl font-semibold text-slate-900 sm:text-2xl">
-                  {lang === "en"
-                    ? "Built With Next-Gen AI That Works Quietly in the Background"
-                    : "مبني بأحدث تقنيات الذكاء الاصطناعي تعمل بهدوء في الخلفية"}
-                </h3>
-
-                <p className="mt-3 text-sm leading-relaxed text-slate-600 sm:text-base">
-                  {lang === "en"
-                    ? "Instead of complex settings, our system learns patterns, detects risks early, and helps you stay in control—whether you’re protecting kids’ devices, securing networks, or managing access."
-                    : "بدلاً من الإعدادات المعقدة، يتعلّم نظامنا الأنماط، يكتشف المخاطر مبكرًا، ويساعدك على التحكم—سواء لحماية أجهزة الأطفال أو تأمين الشبكات أو إدارة الوصول."}
-                </p>
-
-                <div className="mt-6 space-y-3">
-                  {[
-                    {
-                      enTitle: "Autonomous threat detection",
-                      arTitle: "كشف تهديدات تلقائي",
-                      enDesc:
-                        "Finds suspicious traffic and risky behavior in real time.",
-                      arDesc:
-                        "يرصد حركة المرور المشبوهة والسلوكيات الخطرة لحظيًا.",
-                    },
-                    {
-                      enTitle: "Smarter recognition over time",
-                      arTitle: "تعرّف يتحسّن مع الوقت",
-                      enDesc:
-                        "AI improves accuracy as it learns your environment.",
-                      arDesc: "يتحسن الذكاء الاصطناعي كلما تعلّم بيئتك.",
-                    },
-                    {
-                      enTitle: "Helpful automation suggestions",
-                      arTitle: "اقتراحات أتمتة مفيدة",
-                      enDesc: "Recommends settings that match your routines.",
-                      arDesc: "يقترح إعدادات تناسب روتينك.",
-                    },
-                    {
-                      enTitle: "Predictive monitoring for families",
-                      arTitle: "مراقبة استباقية للعائلات",
-                      enDesc:
-                        "Flags risky apps, links, and usage patterns early.",
-                      arDesc:
-                        "يُنبّه مبكرًا للتطبيقات والروابط وأنماط الاستخدام الخطرة.",
-                    },
-                  ].map((item) => (
-                    <div key={item.enTitle} className="flex gap-3">
-                      <div className="mt-0.5 flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600">
-                        ✔
-                      </div>
-                      <div>
-                        <p className="text-sm font-semibold text-slate-900">
-                          {lang === "en" ? item.enTitle : item.arTitle}
-                        </p>
-                        <p className="mt-0.5 text-xs text-slate-600 sm:text-sm">
-                          {lang === "en" ? item.enDesc : item.arDesc}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+        {/* CONTACT (Form only, CRO-optimized) */}
+        <section
+          id="contact"
+          className="flex min-h-[90vh] items-center justify-center py-16"
+        >
+          <div className="w-full max-w-3xl px-4 sm:px-6 lg:px-8">
+            <div className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-6 shadow-xl sm:p-10">
+              {/* Background gradients */}
+              <div className="pointer-events-none absolute inset-0">
+                <div className="absolute -top-28 -left-28 h-80 w-80 rounded-full bg-cyan-300/20 blur-3xl" />
+                <div className="absolute -bottom-28 -right-28 h-80 w-80 rounded-full bg-blue-300/20 blur-3xl" />
               </div>
 
-              <div className="mt-6 rounded-2xl border border-slate-200 bg-white px-4 py-3">
-                <p className="text-xs text-slate-700">
-                  {lang === "en"
-                    ? "Outcome: a smarter, safer environment—without needing you to be “techy.”"
-                    : "النتيجة: بيئة أذكى وأكثر أمانًا—دون الحاجة لأن تكون خبيرًا تقنيًا."}
-                </p>
-              </div>
-            </div>
-
-            {/* RIGHT: Contact form (kept aligned + same validation you already have) */}
-            <div
-              className={`flex flex-col justify-between rounded-3xl border border-slate-200 bg-white p-6 text-left shadow-sm ${
-                isAr ? "text-right" : "text-left"
-              }`}
-            >
-              <div>
-                <h4 className="text-base font-semibold text-slate-900 sm:text-lg">
-                  {lang === "en" ? "Talk to our team" : "تواصل مع فريقنا"}
-                </h4>
-                <p className="mt-2 text-xs text-slate-600 sm:text-sm">
-                  {lang === "en"
-                    ? "Share your needs and we’ll recommend the best solution or product setup."
-                    : "شاركنا احتياجك وسنقترح أفضل حل أو إعداد للمنتجات."}
-                </p>
-
-                {/* trust checks */}
-                <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-left">
-                  <div className="flex items-start gap-2 text-[11px] text-slate-700">
-                    <span className="text-emerald-500">✔</span>
-                    <span>
-                      {lang === "en"
-                        ? "Reply within 24 hours."
-                        : "نرد خلال 24 ساعة."}
-                    </span>
+              <div className={`relative ${isAr ? "text-right" : "text-left"}`}>
+                <div className="mx-auto max-w-xl text-center">
+                  <div className="inline-flex items-center rounded-full border border-cyan-400/30 bg-cyan-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-cyan-700">
+                    {lang === "en" ? "Contact" : "تواصل"}
                   </div>
-                  <div className="mt-1 flex items-start gap-2 text-[11px] text-slate-700">
-                    <span className="text-emerald-500">✔</span>
-                    <span>
-                      {lang === "en"
-                        ? "For homes and businesses."
-                        : "للمنزل والشركات."}
-                    </span>
-                  </div>
-                  <div className="mt-1 flex items-start gap-2 text-[11px] text-slate-700">
-                    <span className="text-emerald-500">✔</span>
-                    <span>
-                      {lang === "en"
-                        ? "Get a recommended setup plan."
-                        : "تحصل على خطة إعداد مقترحة."}
-                    </span>
-                  </div>
-                </div>
-              </div>
 
-              {/* FORM (keep your existing controlled inputs + validation) */}
-              <form
-                onSubmit={handleContactSubmit}
-                className="mt-4 space-y-4 text-left"
-              >
-                {/* Name */}
-                <div className="space-y-1 text-xs sm:text-sm">
-                  <label className="block text-slate-700">
-                    {t.contactName}
-                  </label>
-                  <input
-                    type="text"
-                    value={contact.name}
-                    onChange={(e) =>
-                      setContact((p) => ({ ...p, name: e.target.value }))
-                    }
-                    className={`w-full rounded-xl border bg-white px-3 py-2 text-xs text-slate-900 outline-none sm:text-sm ${
-                      errors.name
-                        ? "border-rose-400 focus:border-rose-500"
-                        : "border-slate-200 focus:border-cyan-500"
-                    }`}
-                    placeholder={lang === "en" ? "Your name" : "اسمك"}
-                  />
-                  {errors.name && (
-                    <p className="text-[11px] text-rose-600">{errors.name}</p>
-                  )}
-                </div>
+                  <h2 className="mt-4 text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
+                    {lang === "en" ? "Contact Us" : "تواصل معنا"}
+                  </h2>
 
-                {/* Email */}
-                <div className="space-y-1 text-xs sm:text-sm">
-                  <label className="block text-slate-700">
-                    {t.contactEmail}
-                  </label>
-                  <input
-                    type="email"
-                    value={contact.email}
-                    onChange={(e) =>
-                      setContact((p) => ({ ...p, email: e.target.value }))
-                    }
-                    className={`w-full rounded-xl border bg-white px-3 py-2 text-xs text-slate-900 outline-none sm:text-sm ${
-                      errors.email
-                        ? "border-rose-400 focus:border-rose-500"
-                        : "border-slate-200 focus:border-cyan-500"
-                    }`}
-                    placeholder={
-                      lang === "en" ? "you@company.com" : "name@example.com"
-                    }
-                  />
-                  {errors.email && (
-                    <p className="text-[11px] text-rose-600">{errors.email}</p>
-                  )}
-                </div>
-
-                {/* Message */}
-                <div className="space-y-1 text-xs sm:text-sm">
-                  <label className="block text-slate-700">
-                    {t.contactMessage}
-                  </label>
-                  <textarea
-                    rows={4}
-                    value={contact.message}
-                    onChange={(e) =>
-                      setContact((p) => ({ ...p, message: e.target.value }))
-                    }
-                    className={`w-full rounded-xl border bg-white px-3 py-2 text-xs text-slate-900 outline-none sm:text-sm ${
-                      errors.message
-                        ? "border-rose-400 focus:border-rose-500"
-                        : "border-slate-200 focus:border-cyan-500"
-                    }`}
-                    placeholder={
-                      lang === "en"
-                        ? "Tell us what you need..."
-                        : "اكتب رسالتك هنا..."
-                    }
-                  />
-                  {errors.message && (
-                    <p className="text-[11px] text-rose-600">
-                      {errors.message}
-                    </p>
-                  )}
-                </div>
-
-                <button
-                  type="submit"
-                  className="inline-flex w-full items-center justify-center rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-cyan-400/30 transition hover:brightness-110"
-                >
-                  {t.contactSubmit}
-                </button>
-
-                {submitted && (
-                  <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-left text-xs text-emerald-800">
+                  <p className="mt-2 text-sm leading-relaxed text-slate-600 sm:text-base">
                     {lang === "en"
-                      ? "✅ Message sent! We’ll get back to you soon."
-                      : "✅ تم الإرسال! سنعود إليك قريبًا."}
-                  </div>
-                )}
+                      ? "Tell us your use case and we’ll recommend the best solution or product setup. We typically reply within 1 business day."
+                      : "أخبرنا باحتياجك وسنقترح أفضل إعداد للحلول أو المنتجات. عادةً نرد خلال يوم عمل واحد."}
+                  </p>
+                </div>
 
-                <p className="text-[10px] text-slate-500">
-                  {lang === "en"
-                    ? "By submitting, you agree to be contacted. No spam."
-                    : "بإرسال هذا النموذج، فإنك توافق على أن نتواصل معك. بدون رسائل مزعجة."}
-                </p>
-              </form>
+                <form onSubmit={handleContactSubmit} className="mt-8 space-y-5">
+                  {/* Name */}
+                  <div className="space-y-1">
+                    <label className="block text-xs font-medium text-slate-700 sm:text-sm">
+                      {lang === "en" ? "Full Name" : "الاسم الكامل"}{" "}
+                      <span className="text-rose-500">*</span>
+                    </label>
+                    <input
+                      value={contact.name}
+                      onChange={(e) =>
+                        setContact((p) => ({ ...p, name: e.target.value }))
+                      }
+                      className={`w-full rounded-xl border bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:ring-4 ${
+                        errors.name
+                          ? "border-rose-300 focus:border-rose-500 focus:ring-rose-500/10"
+                          : "border-slate-200 focus:border-cyan-500 focus:ring-cyan-500/10"
+                      }`}
+                      placeholder={lang === "en" ? "Your name" : "اسمك"}
+                    />
+                    {errors.name && (
+                      <p className="text-[11px] text-rose-600">{errors.name}</p>
+                    )}
+                  </div>
+
+                  {/* Email */}
+                  <div className="space-y-1">
+                    <label className="block text-xs font-medium text-slate-700 sm:text-sm">
+                      {lang === "en" ? "Email Address" : "البريد الإلكتروني"}{" "}
+                      <span className="text-rose-500">*</span>
+                    </label>
+                    <input
+                      type="email"
+                      value={contact.email}
+                      onChange={(e) =>
+                        setContact((p) => ({ ...p, email: e.target.value }))
+                      }
+                      className={`w-full rounded-xl border bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:ring-4 ${
+                        errors.email
+                          ? "border-rose-300 focus:border-rose-500 focus:ring-rose-500/10"
+                          : "border-slate-200 focus:border-cyan-500 focus:ring-cyan-500/10"
+                      }`}
+                      placeholder={
+                        lang === "en" ? "you@company.com" : "name@example.com"
+                      }
+                    />
+                    {errors.email && (
+                      <p className="text-[11px] text-rose-600">
+                        {errors.email}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Message */}
+                  <div className="space-y-1">
+                    <label className="block text-xs font-medium text-slate-700 sm:text-sm">
+                      {lang === "en" ? "What do you need?" : "ما الذي تحتاجه؟"}{" "}
+                      <span className="text-rose-500">*</span>
+                    </label>
+                    <textarea
+                      rows={4}
+                      value={contact.message}
+                      onChange={(e) =>
+                        setContact((p) => ({ ...p, message: e.target.value }))
+                      }
+                      className={`w-full rounded-xl border bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:ring-4 ${
+                        errors.message
+                          ? "border-rose-300 focus:border-rose-500 focus:ring-rose-500/10"
+                          : "border-slate-200 focus:border-cyan-500 focus:ring-cyan-500/10"
+                      }`}
+                      placeholder={
+                        lang === "en"
+                          ? "Home / enterprise / partner… quantities, location, timeline…"
+                          : "منزل / مؤسسة / شريك… الكمية، الموقع، الجدول الزمني…"
+                      }
+                    />
+                    {errors.message && (
+                      <p className="text-[11px] text-rose-600">
+                        {errors.message}
+                      </p>
+                    )}
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="inline-flex w-full items-center justify-center rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-cyan-400/30 transition hover:brightness-110"
+                  >
+                    {lang === "en" ? "Send Message" : "إرسال"}
+                  </button>
+
+                  {submitted && (
+                    <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-xs text-emerald-800">
+                      {lang === "en"
+                        ? "✅ Sent! We’ll reply within 1 business day."
+                        : "✅ تم الإرسال! سنرد خلال يوم عمل واحد."}
+                    </div>
+                  )}
+
+                  <p className="text-center text-[10px] text-slate-500">
+                    {lang === "en"
+                      ? "By submitting, you agree to be contacted. No spam."
+                      : "بإرسال الطلب، توافق على أن نتواصل معك. بدون رسائل مزعجة."}
+                  </p>
+                </form>
+              </div>
             </div>
           </div>
         </section>
